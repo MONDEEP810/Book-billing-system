@@ -1,0 +1,313 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mahamandal Book Stall</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="style.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.29/jspdf.plugin.autotable.min.js"></script>
+</head>
+<body class="p-4">
+
+    <div id="setup-page" class="w-full max-w-lg mx-auto p-4 sm:p-6 lg:p-8 hidden">
+        <div class="bg-[#161b22] shadow-2xl rounded-xl p-8 space-y-6 border border-cyan-900/50 mt-10">
+            <h1 class="text-3xl font-extrabold text-left text-cyan-400">
+                Mahamandal Book Stall
+            </h1>
+            <p class="text-gray-400 text-sm">One-time setup for your local device.</p>
+
+            <div id="status-message-setup" class="hidden p-3 rounded-lg text-center font-medium text-sm"></div>
+            
+            <form id="setup-form" class="space-y-4">
+                <div>
+                    <label class="block text-sm font-medium text-gray-300 mb-1">Business/Person Name <span class="text-red-500">*</span></label>
+                    <input type="text" id="businessName" required class="w-full px-4 py-2 border dark-input rounded-lg shadow-sm" placeholder="e.g. Adhyaksha">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-300 mb-1">Full Address <span class="text-red-500">*</span></label>
+                    <textarea id="address" rows="3" required class="w-full px-4 py-2 border dark-input rounded-lg shadow-sm resize-none" placeholder="Street, City, Pin Code"></textarea>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-300 mb-1">Admin Password <span class="text-red-500">*</span></label>
+                    <input type="password" id="setupPassword" required class="w-full px-4 py-2 border dark-input rounded-lg shadow-sm" placeholder="Secure password for History access">
+                </div>
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-300 mb-1">Phone</label>
+                        <input type="tel" id="phone" class="w-full px-4 py-2 border dark-input rounded-lg shadow-sm">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-300 mb-1">Email</label>
+                        <input type="email" id="email" class="w-full px-4 py-2 border dark-input rounded-lg shadow-sm">
+                    </div>
+                </div>
+                <button type="submit" id="setup-submit-button" class="gradient-button w-full py-3 mt-4 text-white font-bold rounded-lg shadow-lg">
+                    Complete Setup
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <div id="app-page" class="flex flex-col md:flex-row min-h-screen hidden">
+        
+        <aside class="w-full md:w-64 bg-[#1e2730] p-4 shadow-xl md:sticky md:top-0 md:h-screen">
+            <h2 class="text-2xl font-extrabold text-white mb-6">
+                <span id="business-name-display" class="text-transparent bg-clip-text bg-gradient-to-r from-violet-400 to-cyan-400">Billing Portal</span>
+            </h2>
+            <div class="space-y-2">
+                <button onclick="navigateTo('create-bill')" id="nav-create-bill" class="sidebar-link w-full text-left active-link flex items-center p-3 text-white">
+                    <span>📝 Create New Bill</span>
+                </button>
+                <button onclick="navigateTo('product-management')" id="nav-product-management" class="sidebar-link w-full text-left flex items-center p-3 text-gray-300">
+                    <span>📚 Product Management</span>
+                </button>
+                <button onclick="navigateTo('billing-history')" id="nav-billing-history" class="sidebar-link w-full text-left flex items-center p-3 text-gray-300">
+                    <span>🕒 Billing History</span>
+                </button>
+                <button onclick="navigateTo('sales-report')" id="nav-sales-report" class="sidebar-link w-full text-left flex items-center p-3 text-gray-300">
+                    <span>📊 Sales Report</span>
+                </button>
+            </div>
+            <div class="mt-8 pt-4 border-t border-gray-700">
+                <button id="nav-logout" class="sidebar-link w-full text-left flex items-center p-3 text-red-400 hover:bg-red-900/40">
+                    <span>🚪 Reset / Logout</span>
+                </button>
+            </div>
+        </aside>
+
+        <main class="flex-1 p-6 md:p-10 main-content bg-[#0d1117] overflow-auto">
+
+            <div id="create-bill" class="app-page-view">
+                <h1 class="text-4xl font-extrabold text-white mb-4">New Bill Generation</h1>
+                <div id="bill-status-message" class="hidden p-3 rounded-xl font-medium mb-4"></div>
+
+                <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                    <div class="lg:col-span-1 space-y-6">
+                        
+                        
+                        <div class="bg-[#161b22] p-6 rounded-xl shadow-lg border border-gray-700">
+                            <h2 class="text-xl font-bold text-violet-400 mb-4">Add Item</h2>
+                            <form id="add-item-form" class="space-y-3">
+    <input list="product-suggestions" id="product-search-input" class="w-full px-3 py-2 dark-input rounded-lg" placeholder="Type to search book..." autocomplete="off">
+
+<datalist id="product-suggestions">
+    </datalist>
+
+    <div class="flex gap-2">
+        <input type="number" id="item-custom-price" step="0.01" required class="w-28 px-3 py-2 dark-input rounded-lg" placeholder="Price">
+        
+        <input type="number" id="item-quantity" required min="1" value="1" class="w-28 px-3 py-2 dark-input rounded-lg" placeholder="Qty">
+        
+        
+    </div>
+    <button type="submit" id="add-item-btn" style="background-color: #50C878; color: #141414; padding: 10px 30px; border: none; cursor: pointer;"class="w-full py-2 bg-emerald-600 text-white font-bold rounded-lg hover:bg-emerald-700 mb-3 shadow-lg" >Add</button>
+</form>
+                           
+                        </div>
+
+
+                        <div id="save-print-area" class="bg-[#161b22] p-6 rounded-xl shadow-lg border border-gray-700 hidden">
+    <h2 class="text-xl font-bold text-gray-300 mb-4">Total: <span id="grand-total-display" class="text-3xl text-emerald-400 ml-2">₹ 0.00</span></h2>
+    
+    <div class="mb-4">
+        <label class="text-xs text-gray-400 uppercase font-bold tracking-wider">Payment Mode</label>
+        <div class="flex gap-3 mt-2">
+            <label class="cursor-pointer w-1/2">
+                <input type="radio" name="payment-mode" value="Cash" checked class="peer sr-only">
+                <div class="text-center py-2 rounded-lg border border-gray-600 text-gray-400 hover:bg-gray-800 peer-checked:bg-emerald-600 peer-checked:text-white peer-checked:border-emerald-600 transition-all font-semibold">
+                    💵 Cash
+                </div>
+            </label>
+            
+            <label class="cursor-pointer w-1/2">
+                <input type="radio" name="payment-mode" value="UPI" class="peer sr-only">
+                <div class="text-center py-2 rounded-lg border border-gray-600 text-gray-400 hover:bg-gray-800 peer-checked:bg-pink-600 peer-checked:text-white peer-checked:border-pink-600 transition-all font-semibold">
+                    📱 UPI
+                </div>
+            </label>
+        </div>
+    </div>
+    <button id="finalize-bill-btn" class="w-full py-3 bg-emerald-600 text-white font-bold rounded-lg hover:bg-emerald-700 mb-3 shadow-lg transition transform active:scale-95">
+        ✅ Finalize & Print
+    </button>
+    <button id="clear-bill-btn" class="w-full py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition">
+        ❌ Cancel
+    </button>
+</div>
+
+                        
+                        
+                            <div class="bg-[#161b22] p-6 rounded-xl shadow-lg border border-gray-700">
+                            <h2 class="text-xl font-bold text-violet-400 mb-4">Customer Details</h2>
+                            <p class="text-sm text-gray-500 mb-2">Date: <span id="bill-date" class="text-white"></span></p>
+                            <div class="space-y-3">
+                                <input type="text" id="customer-name" class="w-full px-3 py-2 dark-input rounded-lg" placeholder="Customer Name (Optional)">
+                                <input type="tel" id="customer-phone" class="w-full px-3 py-2 dark-input rounded-lg" placeholder="Phone Number (Optional)">
+
+
+                                
+                                
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="lg:col-span-2 bg-[#161b22] p-6 rounded-xl shadow-lg border border-gray-700 overflow-auto">
+                        <h2 class="text-2xl font-bold text-white mb-4">Bill Items</h2>
+                        <table class="min-w-full divide-y divide-gray-700">
+                            <thead class="bg-[#1e2730]">
+                                <tr>
+                                    <th class="py-3 px-3 text-left text-xs font-semibold text-gray-400">#</th>
+                                    <th class="py-3 px-3 text-left text-xs font-semibold text-gray-400">Item</th>
+                                    <th class="py-3 px-3 text-right text-xs font-semibold text-gray-400">Price</th>
+                                    <th class="py-3 px-3 text-right text-xs font-semibold text-gray-400">Qty</th>
+                                    <th class="py-3 px-3 text-right text-xs font-semibold text-gray-400">Total</th>
+                                    <th class="py-3 px-1 text-center text-xs font-semibold text-gray-400">X</th>
+                                </tr>
+                            </thead>
+                            <tbody id="bill-items-table-body" class="divide-y divide-gray-800 text-gray-300"></tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <div id="product-management" class="app-page-view hidden">
+                <h1 class="text-4xl font-extrabold text-white mb-6">Product Management</h1>
+                <div id="product-status-message" class="hidden p-3 rounded-xl font-medium mb-4"></div>
+
+                <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                    <div class="lg:col-span-1 space-y-6">
+                        <div class="bg-[#161b22] p-6 rounded-xl shadow-lg border border-cyan-900/50">
+                            <h2 class="text-xl font-bold text-cyan-400 mb-2">📥 Import CSV</h2>
+                            <p class="text-xs text-gray-400 mb-4">Using 'BookStock.csv' format</p>
+                            <input type="file" id="csv-file-input" accept=".csv" class="hidden">
+                            <label for="csv-file-input" class="cursor-pointer flex items-center justify-center w-full p-4 border-2 border-dashed border-gray-600 rounded-lg hover:border-cyan-500 hover:bg-[#1e2730] transition group">
+                                <span id="csv-file-name" class="text-sm font-medium text-gray-400 group-hover:text-white">Click to Select CSV</span>
+                            </label>
+                            <button id="process-csv-btn" class="mt-4 w-full py-2 bg-cyan-700 text-white font-semibold rounded-lg disabled:opacity-50" disabled>
+                                Upload & Process
+                            </button>
+                        </div>
+
+                        <div class="bg-[#161b22] p-6 rounded-xl shadow-lg border border-gray-700">
+                            <h2 class="text-xl font-bold text-violet-400 mb-4">Add Single Item</h2>
+                            <form id="product-form" class="space-y-4">
+                                <input type="text" id="product-name" required class="w-full px-4 py-2 dark-input rounded-lg" placeholder="Book Name">
+                                <input type="number" id="product-price" step="0.01" required class="w-full px-4 py-2 dark-input rounded-lg" placeholder="Price (₹)">
+                                <select id="product-unit" class="w-full px-4 py-2 dark-input rounded-lg">
+                                    <option value="Pcs">Pcs</option>
+                                    <option value="Set">Set</option>
+                                </select>
+                                <button type="submit" class="gradient-button w-full py-2 text-white font-semibold rounded-lg">Add Manual</button>
+                            </form>
+                        </div>
+                    </div>
+
+                    <div class="lg:col-span-2 bg-[#161b22] p-6 rounded-xl shadow-lg border border-gray-700 overflow-auto">
+                        <h2 class="text-2xl font-bold text-white mb-4">Inventory List</h2>
+                        <table class="min-w-full divide-y divide-gray-700">
+                            <thead class="bg-[#1e2730]">
+                                <tr>
+                                    <th class="py-3 px-4 text-left text-xs font-semibold text-gray-400">#</th>
+                                    <th class="py-3 px-4 text-left text-xs font-semibold text-gray-400">Name</th>
+                                    <th class="py-3 px-4 text-right text-xs font-semibold text-gray-400">Price</th>
+                                </tr>
+                            </thead>
+                            <tbody id="products-list" class="divide-y divide-gray-800 text-gray-300"></tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <div id="billing-history" class="app-page-view hidden">
+                <h1 class="text-4xl font-extrabold text-white mb-6">Billing History</h1>
+                <!-- <button onclick="downloadBackupPDF()" class="py-2 px-4 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 ml-2 shadow-lg flex items-center gap-2">
+    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path></svg>
+    Backup Data to PDF
+</button> -->
+                <div id="history-status-message" class="hidden p-3 rounded-xl font-medium mb-4"></div>
+
+                <div id="history-login" class="w-full max-w-sm mx-auto bg-[#161b22] p-6 rounded-xl shadow-lg border border-gray-700 mt-10">
+                    <h2 class="text-2xl font-bold text-red-400 mb-4">🔒 Restricted Access</h2>
+                    <form id="history-login-form" class="space-y-4">
+                        <input type="password" id="history-password" required class="w-full px-4 py-2 border dark-input rounded-lg" placeholder="Enter Admin Password">
+                        <button type="submit" class="gradient-button w-full py-2 text-white font-semibold rounded-lg">Login</button>
+                    </form>
+                </div>
+
+                <div id="history-view" class="hidden">
+                    <div class="flex justify-between items-center mb-4">
+                         <p class="text-gray-400">Total Bills: <span id="history-count" class="text-cyan-400 font-bold">0</span></p>
+                         <button onclick="clearAllHistory()" id="clear-all-history-btn" class="py-2 px-4 bg-red-700 text-white rounded-lg hover:bg-red-800 hidden">
+                            Clear All History
+                         </button>
+                    </div>
+                    <div class="bg-[#161b22] p-6 rounded-xl shadow-lg border border-gray-700 overflow-auto">
+                        <table class="min-w-full divide-y divide-gray-700">
+                            <thead class="bg-[#1e2730]">
+                                <tr>
+                                    <th class="py-3 px-4 text-left text-xs font-semibold text-gray-400">Bill No</th>
+                                    <th class="py-3 px-4 text-left text-xs font-semibold text-gray-400">Customer</th>
+                                    <th class="py-3 px-4 text-left text-xs font-semibold text-gray-400">Mode</th>
+                                    <th class="py-3 px-4 text-left text-xs font-semibold text-gray-400">Date</th>
+                                    <th class="py-3 px-4 text-right text-xs font-semibold text-gray-400">Total</th>
+                                    <th class="py-3 px-2 text-center text-xs font-semibold text-gray-400">Action</th>
+                                </tr>
+                            </thead>
+                            <tbody id="history-table-body" class="divide-y divide-gray-800 text-gray-300"></tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <div id="sales-report" class="app-page-view hidden">
+                <h1 class="text-4xl font-extrabold text-white mb-6">Sales Report</h1>
+                <div id="report-status-message" class="hidden p-3 rounded-xl font-medium mb-4"></div>
+                <div class="flex justify-between items-center mb-4">
+    <h2 class="text-xl font-bold text-cyan-400">Sales Report</h2>
+    
+    <button onclick="downloadReportCSV()" 
+            class="bg-emerald-600 hover:bg-emerald-500 text-white px-4 py-2 rounded shadow flex items-center gap-2">
+        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+        </svg>
+        Download Sales Report
+    </button>
+</div>
+
+
+
+                <div id="report-login" class="w-full max-w-sm mx-auto bg-[#161b22] p-6 rounded-xl shadow-lg border border-gray-700 mt-10">
+                    <h2 class="text-2xl font-bold text-red-400 mb-4">🔒 Restricted Access</h2>
+                    <form id="report-login-form" class="space-y-4">
+                        <input type="password" id="history-password-report" required class="w-full px-4 py-2 border dark-input rounded-lg" placeholder="Enter Admin Password">
+                        <button type="submit" class="gradient-button w-full py-2 text-white font-semibold rounded-lg">Login</button>
+                    </form>
+                </div>
+                
+                <div id="report-view" class="hidden">
+                    <div class="bg-[#1e2730] p-4 rounded-xl shadow-inner mb-6 flex justify-between items-center border border-gray-700">
+                        <p class="text-xl font-bold text-gray-300">Total Revenue: <span id="total-revenue-display" class="text-emerald-400">₹ 0.00</span></p>
+                    </div>
+                    <div class="bg-[#161b22] p-6 rounded-xl shadow-lg border border-gray-700 overflow-auto">
+                        <table class="min-w-full divide-y divide-gray-700">
+                            <thead class="bg-[#1e2730]">
+                                <tr>
+                                    <th class="py-3 px-4 text-left text-xs font-semibold text-gray-400">Item Name</th>
+                                    <th class="py-3 px-4 text-right text-xs font-semibold text-gray-400">Sold Qty</th>
+                                    <th class="py-3 px-4 text-right text-xs font-semibold text-gray-400">Income</th>
+                                </tr>
+                            </thead>
+                            <tbody id="report-table-body" class="divide-y divide-gray-800 text-gray-300"></tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+        </main>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>
