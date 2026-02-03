@@ -10,7 +10,7 @@ let currentBillItems = [];
 let availableProducts = [];
 let isHistoryLoggedIn = false;
 
-// --- Utility: Local Storage with Safety ---
+
 function loadFromLocalStorage(key) {
     try {
         const data = localStorage.getItem(key);
