@@ -65,8 +65,7 @@ window.navigateTo = function(pageId) {
     document.getElementById(pageId)?.classList.remove('hidden');
     
     document.querySelectorAll('.sidebar-link').forEach(l => {
-        l.classList.remove('active-link', 'text-emerald-400');
-        l.classList.add('text-gray-300');
+        l.classList.remove('active-link');
     });
     const activeBtn = document.getElementById(`nav-${pageId}`);
     if (activeBtn) activeBtn.classList.add('active-link');
@@ -137,6 +136,11 @@ function handleCSVImport() {
         renderProductsList();
         renderProductDropdown();
         alert("Imported successfully!");
+        
+        // Reset file input
+        fileInput.value = "";
+        document.getElementById('csv-file-name').textContent = "Select BookStock.csv";
+        document.getElementById('process-csv-btn').disabled = true;
     };
     reader.readAsText(file);
 }
@@ -145,12 +149,12 @@ function renderProductsList() {
     const tbody = document.getElementById('products-list');
     if (!tbody) return;
     tbody.innerHTML = availableProducts.map((p) => `
-        <tr class="border-b border-gray-700">
-            <td class="py-2 px-4 text-sm text-gray-400">${p.bookId}</td>
-            <td class="py-2 px-4 text-sm font-medium text-cyan-400">${p.name}</td>
-            <td class="py-2 px-4 text-sm text-right">₹ ${p.price.toFixed(2)}</td>
+        <tr class="border-b border-gray-800 hover:bg-gray-800/30">
+            <td class="py-3 px-4 text-sm text-gray-500 font-mono">${p.bookId}</td>
+            <td class="py-3 px-4 text-sm font-medium text-cyan-400">${p.name}</td>
+            <td class="py-3 px-4 text-sm text-right font-bold text-gray-300">₹ ${p.price.toFixed(2)}</td>
         </tr>
-    `).join('');
+    `).join('') || '<tr><td colspan="3" class="p-4 text-center text-gray-500">No products imported.</td></tr>';
 }
 
 // --- BILLING CORE ---
@@ -195,12 +199,12 @@ function renderBillTable() {
         total += item.subtotal;
         return `
             <tr class="border-b border-gray-800">
-                <td class="py-2 px-3">${i+1}</td>
-                <td class="py-2 px-3">${item.name}</td>
-                <td class="py-2 px-3 text-right">₹${item.price.toFixed(2)}</td>
-                <td class="py-2 px-3 text-right">${item.quantity}</td>
-                <td class="py-2 px-3 text-right text-emerald-400">₹${item.subtotal.toFixed(2)}</td>
-                <td class="text-center"><button onclick="removeBillItem(${item.id})" class="text-red-500">🗑</button></td>
+                <td class="py-3 px-3 text-gray-500">${i+1}</td>
+                <td class="py-3 px-3 font-medium">${item.name}</td>
+                <td class="py-3 px-3 text-right">₹${item.price.toFixed(2)}</td>
+                <td class="py-3 px-3 text-right">${item.quantity}</td>
+                <td class="py-3 px-3 text-right text-emerald-400 font-bold">₹${item.subtotal.toFixed(2)}</td>
+                <td class="text-center"><button onclick="removeBillItem(${item.id})" class="text-red-500 hover:text-red-400">🗑</button></td>
             </tr>`;
     }).join('');
     
@@ -260,26 +264,36 @@ function printBill(bill) {
         <html>
         <head>
             <style>
-                body { font-family: sans-serif; padding: 20px; color: #333; }
-                .header { text-align: center; border-bottom: 2px solid #0f766e; margin-bottom: 10px; }
-                table { width: 100%; border-collapse: collapse; margin-top: 10px; }
-                th { border-bottom: 1px solid #ccc; text-align: left; }
-                td { padding: 5px 0; }
-                .total { font-weight: bold; font-size: 1.2em; text-align: right; margin-top: 10px; }
+                body { font-family: sans-serif; padding: 40px; color: #333; }
+                .header { text-align: center; border-bottom: 2px solid #0f766e; margin-bottom: 20px; padding-bottom: 10px; }
+                table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+                th { border-bottom: 2px solid #eee; text-align: left; padding: 10px 5px; }
+                td { padding: 10px 5px; border-bottom: 1px solid #f9f9f9; }
+                .total { font-weight: bold; font-size: 1.4em; text-align: right; margin-top: 30px; color: #0f766e; }
+                .footer { margin-top: 50px; text-align: center; font-size: 0.8em; color: #888; }
             </style>
         </head>
         <body>
             <div class="header">
-                <h2>Sthirpara Unit</h2>
-                <p>Akhil Bharat Vivekananda Yuva Mahamandal</p>
+                <h1 style="margin:0;">Sthirpara Unit</h1>
+                <p style="margin:5px 0;">Akhil Bharat Vivekananda Yuva Mahamandal</p>
             </div>
-            <p>Bill No: ${bill.billId} | Date: ${new Date(bill.date).toLocaleDateString()}</p>
-            <p>Customer: ${bill.customerName} | Mode: ${bill.paymentMode}</p>
+            <div style="display:flex; justify-content: space-between;">
+                <div>
+                    <p><strong>Bill No:</strong> ${bill.billId}</p>
+                    <p><strong>Date:</strong> ${new Date(bill.date).toLocaleDateString()}</p>
+                </div>
+                <div style="text-align: right;">
+                    <p><strong>Customer:</strong> ${bill.customerName}</p>
+                    <p><strong>Payment:</strong> ${bill.paymentMode}</p>
+                </div>
+            </div>
             <table>
-                <thead><tr><th>#</th><th>Item</th><th>Qty</th><th>Rate</th><th>Amt</th></tr></thead>
+                <thead><tr><th>#</th><th>Item Description</th><th>Qty</th><th>Rate</th><th>Amount</th></tr></thead>
                 <tbody>${tableRows}</tbody>
             </table>
-            <div class="total">Total: ₹${bill.grandTotal.toFixed(2)}</div>
+            <div class="total">Grand Total: ₹${bill.grandTotal.toFixed(2)}</div>
+            <div class="footer">Thank you for your purchase!</div>
         </body>
         </html>`;
 
@@ -287,8 +301,10 @@ function printBill(bill) {
     if(win) {
         win.document.write(html);
         win.document.close();
-        win.print();
-        win.close();
+        setTimeout(() => {
+            win.print();
+            win.close();
+        }, 500);
     }
 }
 
@@ -301,17 +317,17 @@ function renderHistoryTable() {
     if (countEl) countEl.textContent = history.length;
 
     tbody.innerHTML = history.slice().reverse().map(bill => `
-        <tr class="border-b border-gray-700">
-            <td class="p-2 font-mono text-xs">${bill.billId}</td>
-            <td class="p-2">${bill.customerName}</td>
-            <td class="p-2 text-xs">${bill.paymentMode}</td>
-            <td class="p-2">${new Date(bill.date).toLocaleDateString()}</td>
-            <td class="p-2 text-right">₹${bill.grandTotal.toFixed(2)}</td>
-            <td class="p-2 text-center">
-                <button onclick="deleteBill('${bill.billId}')" class="text-red-500">🗑</button>
+        <tr class="border-b border-gray-800 hover:bg-gray-800/20">
+            <td class="p-3 font-mono text-xs text-cyan-500">${bill.billId}</td>
+            <td class="p-3">${bill.customerName}</td>
+            <td class="p-3"><span class="px-2 py-1 rounded text-[10px] font-bold ${bill.paymentMode === 'Cash' ? 'bg-emerald-900/40 text-emerald-400' : 'bg-pink-900/40 text-pink-400'}">${bill.paymentMode}</span></td>
+            <td class="p-3 text-gray-400">${new Date(bill.date).toLocaleDateString()}</td>
+            <td class="p-3 text-right font-bold">₹${bill.grandTotal.toFixed(2)}</td>
+            <td class="p-3 text-center">
+                <button onclick="deleteBill('${bill.billId}')" class="text-red-500 hover:scale-110 transition">🗑</button>
             </td>
         </tr>
-    `).join('') || '<tr><td colspan="6" class="p-4 text-center">No Bills Found</td></tr>';
+    `).join('') || '<tr><td colspan="6" class="p-8 text-center text-gray-500">No transaction history found.</td></tr>';
 }
 
 function renderReportTable() {
@@ -335,16 +351,16 @@ function renderReportTable() {
     if (!tbody) return;
 
     tbody.innerHTML = Object.keys(salesMap).map(name => `
-        <tr class="border-b border-gray-700">
-            <td class="p-2 text-cyan-400">${name}</td>
-            <td class="p-2 text-right">${salesMap[name].qty}</td>
-            <td class="p-2 text-right">₹${salesMap[name].income.toFixed(2)}</td>
+        <tr class="border-b border-gray-800 hover:bg-gray-800/20">
+            <td class="p-4 text-cyan-400 font-medium">${name}</td>
+            <td class="p-4 text-right">${salesMap[name].qty}</td>
+            <td class="p-4 text-right font-bold text-emerald-400">₹${salesMap[name].income.toFixed(2)}</td>
         </tr>
-    `).join('') || '<tr><td colspan="3" class="p-4 text-center">No Sales Data</td></tr>';
+    `).join('') || '<tr><td colspan="3" class="p-8 text-center text-gray-500">No sales data available.</td></tr>';
 }
 
 window.deleteBill = function(id) {
-    if(!confirm("Delete this bill?")) return;
+    if(!confirm("Are you sure you want to delete this bill record? This cannot be undone.")) return;
     let history = loadFromLocalStorage(BILLING_HISTORY_KEY) || [];
     history = history.filter(b => b.billId !== id);
     saveToLocalStorage(BILLING_HISTORY_KEY, history);
@@ -355,6 +371,8 @@ window.deleteBill = function(id) {
 // --- SALES REPORT CSV ---
 window.downloadReportCSV = function() {
     let history = loadFromLocalStorage(BILLING_HISTORY_KEY) || [];
+    if(history.length === 0) { alert("No data to export!"); return; }
+    
     let csv = "Item Name,Total Quantity,Total Income\n";
     let sales = {};
     history.forEach(b => b.items.forEach(i => {
@@ -369,7 +387,7 @@ window.downloadReportCSV = function() {
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
-    a.download = `Report_${new Date().toISOString().slice(0,10)}.csv`;
+    a.download = `Sales_Report_${new Date().toISOString().slice(0,10)}.csv`;
     a.click();
 }
 
@@ -386,14 +404,19 @@ function checkAuth(context) {
 
 function handleLogin(e, context) {
     e.preventDefault();
-    const pass = document.getElementById(context === 'history' ? 'history-password' : 'history-password-report').value;
+    const passInput = document.getElementById(context === 'history' ? 'history-password' : 'history-password-report');
+    const pass = passInput.value;
     if(pass === loadFromLocalStorage(PASSWORD_KEY)) {
         isHistoryLoggedIn = true;
         checkAuth(context);
-    } else { alert("Wrong Password"); }
+    } else { 
+        alert("Incorrect Password!"); 
+        passInput.value = "";
+    }
 }
 
 function setupEventListeners() {
+    // Setup Form
     document.getElementById('setup-form')?.addEventListener('submit', (e) => {
         e.preventDefault();
         saveToLocalStorage(BUSINESS_KEY, { businessName: document.getElementById('businessName').value });
@@ -401,22 +424,55 @@ function setupEventListeners() {
         checkSetup();
     });
 
+    // CSV Import UI Logic
+    const fileInput = document.getElementById('csv-file-input');
+    const processBtn = document.getElementById('process-csv-btn');
+    const fileNameDisplay = document.getElementById('csv-file-name');
+
+    fileInput?.addEventListener('change', (e) => {
+        if (e.target.files.length > 0) {
+            fileNameDisplay.textContent = e.target.files[0].name;
+            processBtn.disabled = false;
+            processBtn.classList.remove('opacity-30');
+        } else {
+            fileNameDisplay.textContent = "Select BookStock.csv";
+            processBtn.disabled = true;
+            processBtn.classList.add('opacity-30');
+        }
+    });
+
+    processBtn?.addEventListener('click', handleCSVImport);
+
+    // Billing Logic
     document.getElementById('add-item-form')?.addEventListener('submit', handleAddItem);
     document.getElementById('finalize-bill-btn')?.addEventListener('click', handleFinalize);
-    document.getElementById('process-csv-btn')?.addEventListener('click', handleCSVImport);
+    document.getElementById('clear-bill-btn')?.addEventListener('click', () => {
+        if(confirm("Clear current bill?")) {
+            currentBillItems = [];
+            renderBillTable();
+        }
+    });
+
+    // Auth Forms
     document.getElementById('history-login-form')?.addEventListener('submit', (e) => handleLogin(e, 'history'));
     document.getElementById('report-login-form')?.addEventListener('submit', (e) => handleLogin(e, 'report'));
 
+    // Product Search Auto-fill
     document.getElementById('product-search-input')?.addEventListener('input', (e) => {
-        const product = availableProducts.find(p => p.bookId === e.target.value.trim());
+        const val = e.target.value.trim();
+        const product = availableProducts.find(p => p.bookId === val || p.name === val);
         if(product) {
             document.getElementById('item-custom-price').value = product.price.toFixed(2);
             document.getElementById('item-quantity').focus();
         }
     });
 
+    // Logout
     document.getElementById('nav-logout')?.addEventListener('click', () => {
-        if(confirm("Reset everything?")) { localStorage.clear(); location.reload(); }
+        if(confirm("This will permanently delete ALL data including products and history. Proceed?")) { 
+            localStorage.clear(); 
+            location.reload(); 
+        }
     });
 }
 
